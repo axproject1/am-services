@@ -231,28 +231,63 @@ export const DataService = {
   async saveDocumento(doc: Documento, items: any[]): Promise<Documento> {
     if (isSupabaseConfigured && supabase) {
       const { items: _, cliente: __, ...docPayload } = doc;
-      const { data, error } = await supabase
-        .from('documentos')
-        .upsert(docPayload)
-        .select()
-        .single();
+      const idExistente = docPayload.id ? Number(docPayload.id) : null;
+      delete (docPayload as any).id;
 
-      if (!error && data) {
+      let savedId: number | null = null;
+      let dbError: any = null;
+
+      if (idExistente) {
+        // Actualizar existente
+        const { data, error } = await supabase
+          .from('documentos')
+          .update(docPayload)
+          .eq('id', idExistente)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error al actualizar documento en Supabase:', error);
+          dbError = error;
+        } else if (data) {
+          savedId = data.id;
+        }
+      } else {
+        // Insertar nuevo documento
+        const { data, error } = await supabase
+          .from('documentos')
+          .insert(docPayload)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error al insertar documento en Supabase:', error);
+          dbError = error;
+        } else if (data) {
+          savedId = data.id;
+        }
+      }
+
+      if (!dbError && savedId) {
         // Eliminar y reinsertar items
-        await supabase.from('documento_items').delete().eq('documento_id', data.id);
+        await supabase.from('documento_items').delete().eq('documento_id', savedId);
         if (items && items.length > 0) {
           const itemsPayload = items.map((it, idx) => ({
-            documento_id: data.id,
+            documento_id: savedId,
             categoria: it.categoria || 'material',
-            cantidad: it.cantidad,
+            cantidad: Number(it.cantidad) || 1,
             descripcion: it.descripcion,
-            precio_unitario: it.precio_unitario,
+            precio_unitario: Number(it.precio_unitario) || 0,
             total: (Number(it.cantidad) || 0) * (Number(it.precio_unitario) || 0),
             orden: idx,
           }));
-          await supabase.from('documento_items').insert(itemsPayload);
+          const { error: itemsError } = await supabase.from('documento_items').insert(itemsPayload);
+          if (itemsError) console.error('Error al insertar items en Supabase:', itemsError);
         }
-        return await this.getDocumentoById(data.id) as Documento;
+        const docActualizado = await this.getDocumentoById(savedId);
+        if (docActualizado) return docActualizado;
+      } else if (dbError) {
+        throw new Error(`Error en Supabase: ${dbError.message || 'No se pudo guardar el documento'}`);
       }
     }
 
