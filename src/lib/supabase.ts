@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { Documento, EmpresaConfig, Cliente, EnvioLog, TipoDocumento } from './types';
+import { Documento, EmpresaConfig, Cliente, EnvioLog, TipoDocumento, Usuario } from './types';
 import { generarNumeroSiguiente } from './numeracion';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -376,5 +376,63 @@ export const DataService = {
     }
     const envios = getLocal<EnvioLog[]>('envios', []);
     return documentoId ? envios.filter(e => String(e.documento_id) === String(documentoId)) : envios;
+  },
+
+  // ── Autenticación y Usuarios ──
+  async login(email: string, password: string): Promise<Usuario | null> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('id, nombre, email, rol, activo, creado_en')
+        .eq('email', email)
+        .eq('password_hash', password)
+        .eq('activo', true)
+        .single();
+      if (!error && data) return data as Usuario;
+      return null;
+    }
+    // Fallback local: admin por defecto
+    if (email === 'admin@moran.com' && password === 'admin123') {
+      return { id: 1, nombre: 'Administrador', email: 'admin@moran.com', rol: 'admin', activo: true };
+    }
+    return null;
+  },
+
+  async getUsuarios(): Promise<Usuario[]> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('id, nombre, email, rol, activo, creado_en')
+        .order('creado_en', { ascending: false });
+      if (!error && data) return data as Usuario[];
+    }
+    return [{ id: 1, nombre: 'Administrador', email: 'admin@moran.com', rol: 'admin', activo: true }];
+  },
+
+  async crearUsuario(nombre: string, email: string, password: string, rol: 'admin' | 'empleado'): Promise<Usuario | null> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .insert({ nombre, email, password_hash: password, rol, activo: true })
+        .select('id, nombre, email, rol, activo, creado_en')
+        .single();
+      if (error) throw new Error(error.message);
+      if (data) return data as Usuario;
+    }
+    return null;
+  },
+
+  async actualizarUsuario(id: number | string, datos: { nombre?: string; email?: string; rol?: string; activo?: boolean; password_hash?: string }): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase.from('usuarios').update(datos).eq('id', id);
+      if (error) throw new Error(error.message);
+    }
+  },
+
+  async eliminarUsuario(id: number | string): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase.from('usuarios').delete().eq('id', id);
+      if (error) throw new Error(error.message);
+    }
   },
 };

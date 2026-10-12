@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
   Building2,
   Save,
@@ -14,11 +15,14 @@ import {
   HardDrive,
   Upload,
   Image as ImageIcon,
+  Shield,
 } from 'lucide-react';
 import { DataService, isSupabaseConfigured } from '@/lib/supabase';
 import { EmpresaConfig, TerminoCondicion } from '@/lib/types';
+import { useAuth } from '@/components/AuthContext';
 
 export default function ConfiguracionPage() {
+  const { isAdmin } = useAuth();
   const [empresa, setEmpresa] = useState<EmpresaConfig | null>(null);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
@@ -112,6 +116,22 @@ export default function ConfiguracionPage() {
       <div className="flex items-center justify-center py-32 text-slate-500">
         <Loader2 className="w-8 h-8 animate-spin mr-3 text-moran-blue" />
         Cargando configuración...
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="text-center py-32 text-slate-500">
+        <Shield className="w-16 h-16 mx-auto text-slate-300 mb-4" />
+        <p className="text-xl font-bold text-navy mb-2">Acceso Restringido</p>
+        <p className="text-sm text-slate-400 mb-6">Solo los administradores pueden modificar los datos institucionales de la empresa.</p>
+        <Link
+          href="/editor"
+          className="inline-flex items-center gap-2 bg-moran-blue hover:bg-navy text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all"
+        >
+          Ir al Editor de Documentos
+        </Link>
       </div>
     );
   }

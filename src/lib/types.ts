@@ -95,3 +95,14 @@ export interface EnvioLog {
   enviado_en: string;
   exitoso: boolean;
 }
+
+export type RolUsuario = 'admin' | 'empleado';
+
+export interface Usuario {
+  id: number | string;
+  nombre: string;
+  email: string;
+  rol: RolUsuario;
+  activo: boolean;
+  creado_en?: string;
+}

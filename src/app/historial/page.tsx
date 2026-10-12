@@ -25,6 +25,7 @@ import { formatoMoneda } from '@/lib/calculations';
 import { ModalPreview } from '@/components/ModalPreview';
 import { ModalEmail } from '@/components/ModalEmail';
 import { ModalWhatsApp } from '@/components/ModalWhatsApp';
+import { useAuth } from '@/components/AuthContext';
 
 const TIPO_CONFIG: Record<TipoDocumento, { label: string; color: string; bgColor: string; icon: React.ElementType }> = {
   cotizacion: { label: 'Cotización', color: 'text-blue-700', bgColor: 'bg-blue-100', icon: FileText },
@@ -42,6 +43,7 @@ const ESTADO_CONFIG: Record<EstadoDocumento, { label: string; color: string }> =
 const ESTADOS: EstadoDocumento[] = ['borrador', 'enviado', 'aceptado', 'rechazado'];
 
 export default function HistorialPage() {
+  const { usuario, isAdmin } = useAuth();
   const [documentos, setDocumentos] = useState<Documento[]>([]);
   const [empresa, setEmpresa] = useState<EmpresaConfig | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -71,8 +73,13 @@ export default function HistorialPage() {
     setDocumentos(docs);
   };
 
+  // Filtrar según rol
+  const docsVisibles = isAdmin
+    ? documentos
+    : documentos.filter(d => !d.usuario_id || String(d.usuario_id) === String(usuario?.id));
+
   // Filtrar
-  const docsFiltrados = documentos.filter(d => {
+  const docsFiltrados = docsVisibles.filter(d => {
     if (filtroTipo !== 'todos' && d.tipo !== filtroTipo) return false;
     if (filtroEstado !== 'todos' && d.estado !== filtroEstado) return false;
     if (busqueda) {
@@ -128,10 +135,10 @@ export default function HistorialPage() {
         <div>
           <h1 className="text-3xl font-extrabold text-navy flex items-center gap-3">
             <History className="w-8 h-8 text-moran-blue" />
-            Historial de Documentos
+            {isAdmin ? 'Historial de Documentos' : 'Mis Documentos'}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            {documentos.length} documentos registrados en el sistema
+            {docsFiltrados.length} {isAdmin ? 'documentos registrados en el sistema' : 'documentos creados por ti'}
           </p>
         </div>
       </div>
@@ -192,7 +199,7 @@ export default function HistorialPage() {
                   <th className="px-4 py-3">Número</th>
                   <th className="px-4 py-3">Cliente</th>
                   <th className="px-4 py-3">Fecha</th>
-                  <th className="px-4 py-3 text-right">Total</th>
+                  {isAdmin && <th className="px-4 py-3 text-right">Total</th>}
                   <th className="px-4 py-3 text-center">Estado</th>
                   <th className="px-5 py-3 text-right">Acciones</th>
                 </tr>
@@ -217,9 +224,11 @@ export default function HistorialPage() {
                       <td className="px-4 py-3.5 font-mono font-semibold text-navy">{doc.numero}</td>
                       <td className="px-4 py-3.5 text-slate-700">{getClienteNombre(doc)}</td>
                       <td className="px-4 py-3.5 text-slate-500">{doc.fecha}</td>
-                      <td className="px-4 py-3.5 text-right font-bold text-navy">
-                        ${formatoMoneda(doc.total_general)}
-                      </td>
+                      {isAdmin && (
+                        <td className="px-4 py-3.5 text-right font-bold text-navy">
+                          ${formatoMoneda(doc.total_general)}
+                        </td>
+                      )}
                       <td className="px-4 py-3.5 text-center relative">
                         <button
                           onClick={() => setEstadoDropdown(isDropdownOpen ? null : String(doc.id))}
@@ -282,13 +291,15 @@ export default function HistorialPage() {
                           >
                             <Copy className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => handleEliminar(doc.id!)}
-                            title="Eliminar"
-                            className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleEliminar(doc.id!)}
+                              title="Eliminar"
+                              className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

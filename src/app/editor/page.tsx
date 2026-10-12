@@ -42,6 +42,7 @@ import { generarDOCXDocumento } from '@/lib/docxGenerator';
 import { ModalEmail } from '@/components/ModalEmail';
 import { ModalWhatsApp } from '@/components/ModalWhatsApp';
 import { ModalPreview } from '@/components/ModalPreview';
+import { useAuth } from '@/components/AuthContext';
 
 const CATEGORIAS: { value: CategoriaItem; label: string; icon: React.ElementType }[] = [
   { value: 'mano_obra', label: 'Mano de Obra', icon: HardHat },
@@ -57,6 +58,7 @@ const CARGOS_RESPONSABLE = ['Contratista', 'Técnico Instalador', 'Responsable',
 function EditorContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { usuario } = useAuth();
   const docId = searchParams.get('id');
   const tipoParam = (searchParams.get('tipo') as TipoDocumento) || 'cotizacion';
 
@@ -243,7 +245,7 @@ function EditorContent() {
         emisor_cargo: '',
         responsable,
         responsable_cargo: responsableCargo,
-        usuario_id: 1,
+        usuario_id: usuario ? usuario.id : 1,
         usar_empresa: usarEmpresa,
         incluir_logo: incluirLogo,
         incluir_firmas: incluirFirmas,

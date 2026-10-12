@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   FileText,
   Receipt,
@@ -21,6 +22,7 @@ import { DataService } from '@/lib/supabase';
 import { Documento, EmpresaConfig, TipoDocumento, EstadoDocumento } from '@/lib/types';
 import { formatoMoneda } from '@/lib/calculations';
 import { ModalPreview } from '@/components/ModalPreview';
+import { useAuth } from '@/components/AuthContext';
 
 const TIPO_CONFIG: Record<TipoDocumento, { label: string; color: string; bgColor: string; icon: React.ElementType }> = {
   cotizacion: { label: 'Cotización', color: 'text-blue-700', bgColor: 'bg-blue-100', icon: FileText },
@@ -36,12 +38,19 @@ const ESTADO_CONFIG: Record<EstadoDocumento, { label: string; color: string }> =
 };
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const { usuario, isAdmin } = useAuth();
   const [documentos, setDocumentos] = useState<Documento[]>([]);
   const [empresa, setEmpresa] = useState<EmpresaConfig | null>(null);
   const [cargando, setCargando] = useState(true);
   const [previewDoc, setPreviewDoc] = useState<Documento | null>(null);
 
   useEffect(() => {
+    if (!isAdmin) {
+      router.replace('/editor');
+      return;
+    }
+
     (async () => {
       const [docs, emp] = await Promise.all([DataService.getDocumentos(), DataService.getEmpresa()]);
       setDocumentos(docs);
@@ -59,15 +68,20 @@ export default function DashboardPage() {
     );
   }
 
+  // Filtrar por rol: empleados solo ven sus propios documentos
+  const misDocumentos = isAdmin
+    ? documentos
+    : documentos.filter(d => String(d.usuario_id) === String(usuario?.id));
+
   // Estadísticas
-  const countCot = documentos.filter(d => d.tipo === 'cotizacion').length;
-  const countFac = documentos.filter(d => d.tipo === 'factura').length;
-  const countPre = documentos.filter(d => d.tipo === 'presupuesto').length;
-  const totalAceptado = documentos
+  const countCot = misDocumentos.filter(d => d.tipo === 'cotizacion').length;
+  const countFac = misDocumentos.filter(d => d.tipo === 'factura').length;
+  const countPre = misDocumentos.filter(d => d.tipo === 'presupuesto').length;
+  const totalAceptado = misDocumentos
     .filter(d => d.estado === 'aceptado')
     .reduce((sum, d) => sum + (d.total_general || 0), 0);
 
-  const recientes = documentos.slice(0, 10);
+  const recientes = misDocumentos.slice(0, 10);
 
   const getClienteNombre = (doc: Documento): string => {
     return doc.cliente?.nombre || doc.cliente_nombre_manual || 'Sin cliente';
@@ -86,6 +100,7 @@ export default function DashboardPage() {
       icon: FileText,
       color: 'from-blue-500 to-blue-700',
       iconBg: 'bg-blue-400/30',
+      visible: true,
     },
     {
       label: 'Facturas',
@@ -93,6 +108,7 @@ export default function DashboardPage() {
       icon: Receipt,
       color: 'from-emerald-500 to-emerald-700',
       iconBg: 'bg-emerald-400/30',
+      visible: true,
     },
     {
       label: 'Presupuestos',
@@ -100,6 +116,7 @@ export default function DashboardPage() {
       icon: ClipboardList,
       color: 'from-amber-500 to-amber-600',
       iconBg: 'bg-amber-400/30',
+      visible: true,
     },
     {
       label: 'Ingresos Aceptados',
@@ -107,8 +124,9 @@ export default function DashboardPage() {
       icon: TrendingUp,
       color: 'from-violet-500 to-violet-700',
       iconBg: 'bg-violet-400/30',
+      visible: isAdmin, // Solo admin ve ingresos
     },
-  ];
+  ].filter(c => c.visible);
 
   return (
     <>
@@ -203,7 +221,7 @@ export default function DashboardPage() {
                   <th className="px-4 py-3">Número</th>
                   <th className="px-4 py-3">Cliente</th>
                   <th className="px-4 py-3">Fecha</th>
-                  <th className="px-4 py-3 text-right">Total</th>
+                  {isAdmin && <th className="px-4 py-3 text-right">Total</th>}
                   <th className="px-4 py-3 text-center">Estado</th>
                   <th className="px-6 py-3 text-right">Acciones</th>
                 </tr>
@@ -226,9 +244,11 @@ export default function DashboardPage() {
                       <td className="px-4 py-3.5 font-mono font-semibold text-navy">{doc.numero}</td>
                       <td className="px-4 py-3.5 text-slate-700">{getClienteNombre(doc)}</td>
                       <td className="px-4 py-3.5 text-slate-500">{doc.fecha}</td>
-                      <td className="px-4 py-3.5 text-right font-bold text-navy">
-                        ${formatoMoneda(doc.total_general)}
-                      </td>
+                      {isAdmin && (
+                        <td className="px-4 py-3.5 text-right font-bold text-navy">
+                          ${formatoMoneda(doc.total_general)}
+                        </td>
+                      )}
                       <td className="px-4 py-3.5 text-center">
                         <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${estadoCfg.color}`}>
                           {estadoCfg.label}
