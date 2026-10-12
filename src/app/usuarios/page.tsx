@@ -14,15 +14,19 @@ import {
   EyeOff,
   Save,
   X,
+  Pencil,
+  KeyRound,
 } from 'lucide-react';
 import { DataService } from '@/lib/supabase';
 import { Usuario } from '@/lib/types';
 import { useAuth } from '@/components/AuthContext';
+import { ModalPerfil } from '@/components/ModalPerfil';
 
 export default function UsuariosPage() {
   const { isAdmin, usuario: loggedUser } = useAuth();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [showModalPerfil, setShowModalPerfil] = useState(false);
   const [mensaje, setMensaje] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null);
 
   // Formulario nuevo usuario
@@ -143,13 +147,22 @@ export default function UsuariosPage() {
           </h1>
           <p className="text-sm text-slate-500 mt-1">Crea y administra las cuentas del sistema</p>
         </div>
-        <button
-          onClick={() => setMostrarFormulario(!mostrarFormulario)}
-          className="inline-flex items-center gap-2 bg-moran-blue hover:bg-navy text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-blue-200/50 transition-all hover:scale-[1.02]"
-        >
-          {mostrarFormulario ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-          {mostrarFormulario ? 'Cancelar' : 'Nuevo Usuario'}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowModalPerfil(true)}
+            className="inline-flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-bold border border-slate-200 shadow-sm transition-all hover:scale-[1.02]"
+          >
+            <KeyRound className="w-4 h-4 text-moran-blue" />
+            Mi Cuenta / Contraseña
+          </button>
+          <button
+            onClick={() => setMostrarFormulario(!mostrarFormulario)}
+            className="inline-flex items-center gap-2 bg-moran-blue hover:bg-navy text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-blue-200/50 transition-all hover:scale-[1.02]"
+          >
+            {mostrarFormulario ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+            {mostrarFormulario ? 'Cancelar' : 'Nuevo Usuario'}
+          </button>
+        </div>
       </div>
 
       {/* Mensaje */}
@@ -295,7 +308,16 @@ export default function UsuariosPage() {
                       </button>
                     </td>
                     <td className="px-6 py-3.5 text-right">
-                      {!esYoMismo && (
+                      {esYoMismo ? (
+                        <button
+                          onClick={() => setShowModalPerfil(true)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-moran-blue bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors"
+                          title="Editar mi nombre, correo o contraseña"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                          Editar Mis Datos
+                        </button>
+                      ) : (
                         <button
                           onClick={() => handleEliminar(user)}
                           className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors"
@@ -334,6 +356,15 @@ export default function UsuariosPage() {
           </p>
         </div>
       </div>
+
+      {/* Modal para editar mi perfil */}
+      <ModalPerfil
+        isOpen={showModalPerfil}
+        onClose={() => {
+          setShowModalPerfil(false);
+          cargarUsuarios();
+        }}
+      />
     </>
   );
 }

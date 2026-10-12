@@ -121,6 +121,23 @@ export default function LoginPage() {
             Contacta al administrador si no tienes credenciales.
           </p>
         </div>
+
+        {/* Créditos del desarrollador */}
+        <div className="mt-8 text-center">
+          <a
+            href="https://axnetworksolutions.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/[0.06] hover:bg-white/[0.12] text-blue-200 text-xs font-semibold backdrop-blur-md border border-white/10 transition-all hover:scale-105 group"
+          >
+            <span className="text-blue-300/80">Developed by</span>
+            <img
+              src="/assets/ax-logo-blanco.png"
+              alt="AX Network Solutions"
+              className="h-5 w-auto object-contain"
+            />
+          </a>
+        </div>
       </div>
     </div>
   );

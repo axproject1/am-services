@@ -15,14 +15,17 @@ import {
   Shield,
   UserCog,
   ChevronDown,
+  KeyRound,
 } from 'lucide-react';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthContext';
+import { ModalPerfil } from '@/components/ModalPerfil';
 
 export function Navbar() {
   const pathname = usePathname();
   const { usuario, isAdmin, logout } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showModalPerfil, setShowModalPerfil] = useState(false);
 
   // Construir items de navegación según rol
   const navItems = [
@@ -114,12 +117,24 @@ export function Navbar() {
                         {isAdmin ? 'Administrador' : 'Empleado'}
                       </span>
                     </div>
+
+                    <button
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        setShowModalPerfil(true);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors border-b border-slate-100"
+                    >
+                      <KeyRound className="w-4 h-4 text-moran-blue" />
+                      Mi Perfil / Contraseña
+                    </button>
+
                     <button
                       onClick={() => {
                         setShowUserMenu(false);
                         logout();
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-rose-600 hover:bg-rose-50 transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50 transition-colors"
                     >
                       <LogOut className="w-4 h-4" />
                       Cerrar Sesión
@@ -139,6 +154,12 @@ export function Navbar() {
           </div>
         </div>
       </div>
+
+      {/* Modal para editar mi perfil */}
+      <ModalPerfil
+        isOpen={showModalPerfil}
+        onClose={() => setShowModalPerfil(false)}
+      />
     </header>
   );
 }

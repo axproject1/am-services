@@ -22,10 +22,28 @@ function AppContent({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col bg-slate-50">
       <Navbar />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</main>
-    </>
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">{children}</main>
+      <footer className="mt-auto py-5 border-t border-slate-200 bg-white/70 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+          <p>© {new Date().getFullYear()} Servicios Morán — Sistema de Documentos Comerciales</p>
+          <a
+            href="https://axnetworksolutions.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-semibold border border-slate-200/80 transition-all hover:scale-105 shadow-sm group"
+          >
+            <span className="text-slate-500">Developed by</span>
+            <img
+              src="/assets/ax-logo-negro.png"
+              alt="axnetworksolutions"
+              className="h-5 w-auto object-contain"
+            />
+          </a>
+        </div>
+      </footer>
+    </div>
   );
 }
 
