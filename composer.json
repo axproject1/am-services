@@ -1,0 +1,22 @@
+{
+    "name": "servicios-moran/documentos",
+    "description": "Sistema de Documentos Comerciales para Servicios Morán",
+    "type": "project",
+    "require": {
+        "php": ">=8.0",
+        "phpoffice/phpword": "^1.1",
+        "phpmailer/phpmailer": "^6.8",
+        "dompdf/dompdf": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Servicios Moran",
+            "email": "info@serviciosmoran.com"
+        }
+    ]
+}

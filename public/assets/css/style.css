@@ -1,0 +1,113 @@
+/* ══════════════════════════════════════════════════════
+   AM-Services — Styles  (Servicios Morán)
+   ══════════════════════════════════════════════════════ */
+:root {
+    --color-navy:      #1B3A6B;
+    --color-blue:      #2E6DB4;
+    --color-light-blue:#EAF1FB;
+    --color-border:    #D0D8E8;
+    --color-gray-bg:   #F2F5F9;
+    --color-text:      #333333;
+}
+
+/* ── Base ─────────────────────────────────────────── */
+body {
+    font-family: 'Inter', sans-serif;
+    color: var(--color-text);
+    background-color: var(--color-gray-bg) !important;
+}
+
+/* ── Colors ───────────────────────────────────────── */
+.bg-navy   { background-color: var(--color-navy) !important; }
+.text-navy { color: var(--color-navy) !important; }
+.bg-blue   { background-color: var(--color-blue) !important; }
+.text-blue { color: var(--color-blue) !important; }
+
+/* ── Login ────────────────────────────────────────── */
+.login-card {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 8px 24px rgba(27, 58, 107, 0.12);
+    overflow: hidden;
+}
+.login-header {
+    background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-blue) 100%);
+    color: white;
+    padding: 30px 20px;
+    text-align: center;
+}
+.login-icon { font-size: 3rem; margin-bottom: 15px; }
+
+/* ── Dashboard cards ──────────────────────────────── */
+.dashboard-card {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.dashboard-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+}
+.dashboard-icon { font-size: 2.5rem; opacity: 0.75; }
+
+/* ── Buttons ──────────────────────────────────────── */
+.btn-primary {
+    background-color: var(--color-blue);
+    border-color: var(--color-blue);
+}
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: var(--color-navy);
+    border-color: var(--color-navy);
+}
+
+/* ── Utilities ────────────────────────────────────── */
+.shadow-sm { box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important; }
+
+/* ── Terms boxes (preview in editor) ─────────────── */
+.term-preview-box {
+    background-color: var(--color-light-blue);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+.term-preview-label {
+    color: var(--color-blue);
+    font-weight: 600;
+}
+
+/* ── Estado badges ────────────────────────────────── */
+.badge {
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+/* ── Estado dropdown trigger ──────────────────────── */
+.dropdown > a .badge { cursor: pointer; transition: opacity 0.15s; }
+.dropdown > a:hover  .badge { opacity: 0.85; }
+
+/* ── Sticky sidebar ───────────────────────────────── */
+.sticky-top { z-index: 100; }
+
+/* ── Table hover ──────────────────────────────────── */
+.table-hover tbody tr:hover { background-color: rgba(46,109,180,0.04); }
+
+/* ── Card header divider ──────────────────────────── */
+.card-header.border-bottom {
+    border-bottom: 1px solid rgba(0,0,0,0.07) !important;
+}
+
+/* ── Abono row highlight ──────────────────────────── */
+#ui-abono-container { color: #1a7a4a; }
+#ui-saldo-container { color: #b8730a; }
+
+/* ── Print ────────────────────────────────────────── */
+@media print {
+    .navbar, .btn, .no-print, .dropdown { display: none !important; }
+    body { background-color: white !important; }
+}
