@@ -38,10 +38,10 @@ CREATE TABLE IF NOT EXISTS clientes (
   creado_en DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Documentos (cotización / factura / presupuesto)
+-- Documentos (cotización / factura / presupuesto / lista_materiales)
 CREATE TABLE IF NOT EXISTS documentos (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  tipo ENUM('cotizacion', 'factura', 'presupuesto') NOT NULL,
+  tipo ENUM('cotizacion', 'factura', 'presupuesto', 'lista_materiales') NOT NULL,
   numero VARCHAR(30) UNIQUE NOT NULL,    -- COT-2026-001
   fecha DATE NOT NULL,
   valida_hasta DATE,

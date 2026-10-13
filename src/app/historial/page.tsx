@@ -18,6 +18,7 @@ import {
   Filter,
   ChevronDown,
   Loader2,
+  Package,
 } from 'lucide-react';
 import { DataService } from '@/lib/supabase';
 import { Documento, EmpresaConfig, TipoDocumento, EstadoDocumento } from '@/lib/types';
@@ -31,6 +32,7 @@ const TIPO_CONFIG: Record<TipoDocumento, { label: string; color: string; bgColor
   cotizacion: { label: 'Cotización', color: 'text-blue-700', bgColor: 'bg-blue-100', icon: FileText },
   factura: { label: 'Factura', color: 'text-emerald-700', bgColor: 'bg-emerald-100', icon: Receipt },
   presupuesto: { label: 'Presupuesto', color: 'text-amber-700', bgColor: 'bg-amber-100', icon: ClipboardList },
+  lista_materiales: { label: 'Lista de Materiales', color: 'text-purple-700', bgColor: 'bg-purple-100', icon: Package },
 };
 
 const ESTADO_CONFIG: Record<EstadoDocumento, { label: string; color: string }> = {
@@ -167,6 +169,7 @@ export default function HistorialPage() {
             <option value="cotizacion">Cotizaciones</option>
             <option value="factura">Facturas</option>
             <option value="presupuesto">Presupuestos</option>
+            <option value="lista_materiales">Listas de Materiales</option>
           </select>
         </div>
 

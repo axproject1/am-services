@@ -5,6 +5,7 @@ export function generarNumeroSiguiente(tipo: TipoDocumento, numerosExistentes: s
     cotizacion: 'COT',
     factura: 'FAC',
     presupuesto: 'PRE',
+    lista_materiales: 'MAT',
   };
 
   const prefijo = prefijos[tipo] || 'DOC';

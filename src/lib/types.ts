@@ -1,4 +1,4 @@
-export type TipoDocumento = 'cotizacion' | 'factura' | 'presupuesto';
+export type TipoDocumento = 'cotizacion' | 'factura' | 'presupuesto' | 'lista_materiales';
 
 export type EstadoDocumento = 'borrador' | 'enviado' | 'aceptado' | 'rechazado';
 

@@ -387,9 +387,10 @@ class PdfGenerator {
     /** Devuelve el label en español del tipo de documento */
     private function tipoLabel(string $tipo): string {
         return [
-            'cotizacion'  => 'Cotización',
-            'factura'     => 'Factura',
-            'presupuesto' => 'Presupuesto',
+            'cotizacion'        => 'Cotización',
+            'factura'           => 'Factura',
+            'presupuesto'       => 'Presupuesto',
+            'lista_materiales'  => 'Lista de Materiales',
         ][$tipo] ?? ucfirst($tipo);
     }
 }

@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS public.clientes (
 -- 4. Tabla: documentos (Cotizaciones, Facturas y Presupuestos)
 CREATE TABLE IF NOT EXISTS public.documentos (
     id BIGSERIAL PRIMARY KEY,
-    tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('cotizacion', 'factura', 'presupuesto')),
+    tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('cotizacion', 'factura', 'presupuesto', 'lista_materiales')),
     numero VARCHAR(50) UNIQUE NOT NULL,
     fecha DATE NOT NULL DEFAULT CURRENT_DATE,
     valida_hasta DATE,

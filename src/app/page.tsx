@@ -17,6 +17,7 @@ import {
   ArrowUpRight,
   BarChart3,
   Loader2,
+  Package,
 } from 'lucide-react';
 import { DataService } from '@/lib/supabase';
 import { Documento, EmpresaConfig, TipoDocumento, EstadoDocumento } from '@/lib/types';
@@ -24,10 +25,14 @@ import { formatoMoneda } from '@/lib/calculations';
 import { ModalPreview } from '@/components/ModalPreview';
 import { useAuth } from '@/components/AuthContext';
 
-const TIPO_CONFIG: Record<TipoDocumento, { label: string; color: string; bgColor: string; icon: React.ElementType }> = {
-  cotizacion: { label: 'Cotización', color: 'text-blue-700', bgColor: 'bg-blue-100', icon: FileText },
-  factura: { label: 'Factura', color: 'text-emerald-700', bgColor: 'bg-emerald-100', icon: Receipt },
-  presupuesto: { label: 'Presupuesto', color: 'text-amber-700', bgColor: 'bg-amber-100', icon: ClipboardList },
+const TIPO_CONFIG: Record<
+  TipoDocumento,
+  { label: string; color: string; bgColor: string; icon: React.ElementType; nuevoLabel?: string }
+> = {
+  cotizacion: { label: 'Cotización', color: 'text-blue-700', bgColor: 'bg-blue-100', icon: FileText, nuevoLabel: 'Nueva Cotización' },
+  factura: { label: 'Factura', color: 'text-emerald-700', bgColor: 'bg-emerald-100', icon: Receipt, nuevoLabel: 'Nueva Factura' },
+  presupuesto: { label: 'Presupuesto', color: 'text-amber-700', bgColor: 'bg-amber-100', icon: ClipboardList, nuevoLabel: 'Nuevo Presupuesto' },
+  lista_materiales: { label: 'Lista de Materiales', color: 'text-purple-700', bgColor: 'bg-purple-100', icon: Package, nuevoLabel: 'Nueva Lista de Materiales' },
 };
 
 const ESTADO_CONFIG: Record<EstadoDocumento, { label: string; color: string }> = {
@@ -77,6 +82,7 @@ export default function DashboardPage() {
   const countCot = misDocumentos.filter(d => d.tipo === 'cotizacion').length;
   const countFac = misDocumentos.filter(d => d.tipo === 'factura').length;
   const countPre = misDocumentos.filter(d => d.tipo === 'presupuesto').length;
+  const countMat = misDocumentos.filter(d => d.tipo === 'lista_materiales').length;
   const totalAceptado = misDocumentos
     .filter(d => d.estado === 'aceptado')
     .reduce((sum, d) => sum + (d.total_general || 0), 0);
@@ -119,6 +125,14 @@ export default function DashboardPage() {
       visible: true,
     },
     {
+      label: 'Listas de Materiales',
+      count: countMat,
+      icon: Package,
+      color: 'from-purple-500 to-purple-700',
+      iconBg: 'bg-purple-400/30',
+      visible: true,
+    },
+    {
       label: 'Ingresos Aceptados',
       count: `$${formatoMoneda(totalAceptado)}`,
       icon: TrendingUp,
@@ -145,8 +159,8 @@ export default function DashboardPage() {
             <PlusCircle className="w-5 h-5" />
             Nuevo Documento
           </button>
-          <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20">
-            {(['cotizacion', 'factura', 'presupuesto'] as TipoDocumento[]).map(tipo => {
+          <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20">
+            {(['cotizacion', 'factura', 'presupuesto', 'lista_materiales'] as TipoDocumento[]).map(tipo => {
               const cfg = TIPO_CONFIG[tipo];
               const Icon = cfg.icon;
               return (
@@ -156,7 +170,7 @@ export default function DashboardPage() {
                   className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
                 >
                   <Icon className={`w-4 h-4 ${cfg.color}`} />
-                  Nueva {cfg.label}
+                  {cfg.nuevoLabel || `Nueva ${cfg.label}`}
                 </Link>
               );
             })}
@@ -165,7 +179,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Tarjetas de Estadísticas */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
         {statCards.map(card => {
           const Icon = card.icon;
           return (
@@ -188,6 +202,37 @@ export default function DashboardPage() {
           );
         })}
       </div>
+
+      {/* Espacio para Crear Lista de Materiales */}
+      <div className="mb-8 bg-gradient-to-r from-slate-900 via-purple-950 to-slate-900 rounded-2xl p-6 sm:p-7 text-white shadow-xl relative overflow-hidden border border-purple-500/20">
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 mb-3">
+              <Package className="w-3.5 h-3.5 text-purple-400" />
+              Nuevo Documento Disponible
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
+              Espacio para Crear Lista de Materiales
+            </h2>
+            <p className="text-sm text-slate-300 mt-2 leading-relaxed">
+              Elabora listas detalladas de insumos, materiales y equipos requeridos para tus obras o proyectos. Controla cantidades, descripciones y costos unitarios con cálculo automático de totales y exportación directa en formato PDF o Word.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
+            <Link
+              href="/editor?tipo=lista_materiales"
+              className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-purple-900/50 transition-all hover:scale-105 active:scale-95 w-full md:w-auto"
+            >
+              <PlusCircle className="w-5 h-5" />
+              Crear Lista de Materiales
+            </Link>
+          </div>
+        </div>
+        {/* Glow decorativo de fondo */}
+        <div className="absolute right-0 top-0 -mt-10 -mr-10 w-56 h-56 rounded-full bg-purple-600/15 blur-3xl pointer-events-none" />
+        <div className="absolute left-1/3 bottom-0 -mb-10 w-44 h-44 rounded-full bg-blue-600/10 blur-2xl pointer-events-none" />
+      </div>
+
 
       {/* Documentos Recientes */}
       <div className="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">

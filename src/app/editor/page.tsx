@@ -24,6 +24,7 @@ import {
   Loader2,
   Copy,
   CheckCircle2,
+  Package,
 } from 'lucide-react';
 import {
   Documento,
@@ -43,6 +44,13 @@ import { ModalEmail } from '@/components/ModalEmail';
 import { ModalWhatsApp } from '@/components/ModalWhatsApp';
 import { ModalPreview } from '@/components/ModalPreview';
 import { useAuth } from '@/components/AuthContext';
+
+const TIPO_NOMBRES: Record<TipoDocumento, string> = {
+  cotizacion: 'Cotización',
+  factura: 'Factura',
+  presupuesto: 'Presupuesto',
+  lista_materiales: 'Lista de Materiales',
+};
 
 const CATEGORIAS: { value: CategoriaItem; label: string; icon: React.ElementType }[] = [
   { value: 'mano_obra', label: 'Mano de Obra', icon: HardHat },
@@ -88,7 +96,9 @@ function EditorContent() {
   const [abonoPorcentaje, setAbonoPorcentaje] = useState(0);
   const [abonoBase, setAbonoBase] = useState<'total' | 'mano_obra'>('total');
   const [toggleAbono, setToggleAbono] = useState(false);
-  const [seccionTitulo, setSeccionTitulo] = useState('');
+  const [seccionTitulo, setSeccionTitulo] = useState(
+    tipoParam === 'lista_materiales' ? 'LISTA DE MATERIALES E INSUMOS' : ''
+  );
 
   // Ítems
   const [items, setItems] = useState<DocumentoItem[]>([
@@ -356,9 +366,15 @@ function EditorContent() {
       {/* CABECERA */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200">
         <h1 className="text-2xl font-extrabold text-navy flex items-center gap-2.5">
-          <FileText className="w-7 h-7 text-moran-blue" />
+          {tipo === 'lista_materiales' ? (
+            <Package className="w-7 h-7 text-purple-600" />
+          ) : (
+            <FileText className="w-7 h-7 text-moran-blue" />
+          )}
           {docCargado
-            ? `Editar ${tipo.charAt(0).toUpperCase() + tipo.slice(1)} #${numero}`
+            ? `Editar ${TIPO_NOMBRES[tipo] || tipo} #${numero}`
+            : tipo === 'lista_materiales'
+            ? 'Nueva Lista de Materiales'
             : 'Nuevo Documento'}
         </h1>
         <div className="flex items-center gap-2 flex-wrap">
@@ -421,6 +437,21 @@ function EditorContent() {
         </div>
       )}
 
+      {/* ESPACIO LISTA DE MATERIALES - BANNER INFORMATIVO */}
+      {tipo === 'lista_materiales' && (
+        <div className="mb-5 p-4 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-between gap-3 text-purple-900 text-sm shadow-sm animate-fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 shrink-0">
+              <Package className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="font-bold text-purple-950">Espacio de Creación: Lista de Materiales</p>
+              <p className="text-xs text-purple-700">Registra todos los insumos, materiales y equipos requeridos para tu proyecto con cantidades, precios unitarios y cálculos automáticos.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* ═══ COLUMNA PRINCIPAL (2/3) ═══ */}
         <div className="lg:col-span-2 space-y-5">
@@ -434,12 +465,19 @@ function EditorContent() {
                 <label className="block text-xs font-semibold text-slate-500 mb-1.5">Tipo de Documento</label>
                 <select
                   value={tipo}
-                  onChange={e => setTipo(e.target.value as TipoDocumento)}
+                  onChange={e => {
+                    const nuevoTipo = e.target.value as TipoDocumento;
+                    setTipo(nuevoTipo);
+                    if (nuevoTipo === 'lista_materiales' && !seccionTitulo) {
+                      setSeccionTitulo('LISTA DE MATERIALES E INSUMOS');
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-moran-blue focus:border-moran-blue outline-none"
                 >
                   <option value="cotizacion">Cotización</option>
                   <option value="factura">Factura</option>
                   <option value="presupuesto">Presupuesto</option>
+                  <option value="lista_materiales">Lista de Materiales</option>
                 </select>
               </div>
               <div>
@@ -556,13 +594,20 @@ function EditorContent() {
           {/* Tabla de Ítems */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="font-bold text-navy text-sm">Ítems / Servicios</h3>
+              <h3 className="font-bold text-navy text-sm flex items-center gap-2">
+                {tipo === 'lista_materiales' && <Package className="w-4 h-4 text-purple-600" />}
+                {tipo === 'lista_materiales' ? 'Lista de Materiales e Insumos' : 'Ítems / Servicios'}
+              </h3>
               <button
                 type="button"
                 onClick={agregarItem}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-moran-blue hover:bg-navy text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors ${
+                  tipo === 'lista_materiales'
+                    ? 'bg-purple-600 hover:bg-purple-700'
+                    : 'bg-moran-blue hover:bg-navy'
+                }`}
               >
-                <Plus className="w-3.5 h-3.5" /> Añadir Fila
+                <Plus className="w-3.5 h-3.5" /> {tipo === 'lista_materiales' ? 'Añadir Material' : 'Añadir Fila'}
               </button>
             </div>
             <div className="overflow-x-auto">
@@ -616,7 +661,7 @@ function EditorContent() {
                       <td className="px-2 py-2">
                         <input
                           type="text"
-                          placeholder="Descripción del ítem"
+                          placeholder={tipo === 'lista_materiales' ? 'Descripción o especificación del material' : 'Descripción del ítem'}
                           value={item.descripcion}
                           onChange={e => updateItem(idx, 'descripcion', e.target.value)}
                           className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-moran-blue outline-none"

@@ -242,6 +242,6 @@ class DocxGenerator {
     }
 
     private function tipoLabel(string $tipo): string {
-        return ['cotizacion'=>'Cotización','factura'=>'Factura','presupuesto'=>'Presupuesto'][$tipo] ?? ucfirst($tipo);
+        return ['cotizacion'=>'Cotización','factura'=>'Factura','presupuesto'=>'Presupuesto','lista_materiales'=>'Lista de Materiales'][$tipo] ?? ucfirst($tipo);
     }
 }

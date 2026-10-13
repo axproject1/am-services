@@ -74,7 +74,13 @@ export async function generarPDFDocumento(
   // ── 2. CABECERA / HEADER CORPORATIVO ──
   const empresaNombre = doc.usar_empresa ? (empresa.nombre || 'SERVICIOS MORÁN') : '';
   const empresaSub = doc.usar_empresa ? (empresa.subtitulo || 'Servicios Múltiples Residenciales y Comerciales') : '';
-  const tipoTitulo = (doc.tipo || 'FACTURA').toUpperCase();
+  const TITULOS_TIPO: Record<string, string> = {
+    cotizacion: 'COTIZACIÓN',
+    factura: 'FACTURA',
+    presupuesto: 'PRESUPUESTO',
+    lista_materiales: 'LISTA DE MATERIALES',
+  };
+  const tipoTitulo = TITULOS_TIPO[doc.tipo] || (doc.tipo || 'DOCUMENTO').toUpperCase();
 
   const tieneLogo = Boolean(
     doc.usar_empresa &&

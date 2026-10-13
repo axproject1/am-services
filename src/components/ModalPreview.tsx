@@ -47,7 +47,16 @@ export function ModalPreview({ isOpen, onClose, documento, empresa }: ModalPrevi
         <div className="bg-navy px-6 py-3.5 flex items-center justify-between text-white shrink-0">
           <div className="flex items-center gap-2 font-semibold">
             <Eye className="w-5 h-5 text-amber-400" />
-            <span>Vista Previa: {documento.tipo.toUpperCase()} #{documento.numero}</span>
+            <span>
+              Vista Previa:{' '}
+              {({
+                cotizacion: 'COTIZACIÓN',
+                factura: 'FACTURA',
+                presupuesto: 'PRESUPUESTO',
+                lista_materiales: 'LISTA DE MATERIALES',
+              }[documento.tipo] || documento.tipo.toUpperCase())}{' '}
+              #{documento.numero}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <button

@@ -84,7 +84,13 @@ function base64ToUint8Array(base64: string): Uint8Array {
 export async function generarDOCXDocumento(doc: Documento, empresa: EmpresaConfig): Promise<void> {
   const empresaNombre = doc.usar_empresa ? (empresa.nombre || 'SERVICIOS MORÁN') : '';
   const empresaSub = doc.usar_empresa ? (empresa.subtitulo || 'Servicios Múltiples Residenciales y Comerciales') : '';
-  const tipoTitulo = (doc.tipo || 'FACTURA').toUpperCase();
+  const TITULOS_TIPO: Record<string, string> = {
+    cotizacion: 'COTIZACIÓN',
+    factura: 'FACTURA',
+    presupuesto: 'PRESUPUESTO',
+    lista_materiales: 'LISTA DE MATERIALES',
+  };
+  const tipoTitulo = TITULOS_TIPO[doc.tipo] || (doc.tipo || 'DOCUMENTO').toUpperCase();
   const clienteNombre = doc.cliente?.nombre || doc.cliente_nombre_manual || 'Cliente Particular';
 
   const tieneLogo = Boolean(

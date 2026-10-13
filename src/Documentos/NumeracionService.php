@@ -14,7 +14,8 @@ class NumeracionService {
         $prefijos = [
             'cotizacion' => 'COT', 
             'factura' => 'FAC', 
-            'presupuesto' => 'PRE'
+            'presupuesto' => 'PRE',
+            'lista_materiales' => 'MAT'
         ];
         
         if (!isset($prefijos[$tipo])) {
