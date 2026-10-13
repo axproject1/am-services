@@ -241,7 +241,7 @@ export async function generarDOCXDocumento(doc: Documento, empresa: EmpresaConfi
             rows: [
               new TableRow({
                 children: [
-                  // Columna Izquierda: Cliente
+                  // Columna Izquierda: Cliente u Obra
                   new TableCell({
                     width: { size: 50, type: WidthType.PERCENTAGE },
                     shading: { fill: LIGHT_BG },
@@ -250,53 +250,98 @@ export async function generarDOCXDocumento(doc: Documento, empresa: EmpresaConfi
                       new Paragraph({
                         children: [
                           new TextRun({
-                            text: 'DATOS DEL CLIENTE',
+                            text: doc.tipo === 'lista_materiales' ? 'DATOS DE LA OBRA / PROYECTO' : 'DATOS DEL CLIENTE',
                             bold: true,
                             color: ACCENT_BLUE,
                             size: 17,
                           }),
                         ],
                       }),
-                      new Paragraph({
-                        spacing: { before: 80 },
-                        children: [
-                          new TextRun({ text: 'Cliente: ', bold: true, color: TEXT_MUTED, size: 17 }),
-                          new TextRun({ text: clienteNombre, bold: true, color: TEXT_DARK, size: 18 }),
-                        ],
-                      }),
-                      ...(doc.cliente?.ruc_nit
+                      ...(doc.tipo === 'lista_materiales'
                         ? [
                             new Paragraph({
-                              spacing: { before: 40 },
+                              spacing: { before: 80 },
                               children: [
-                                new TextRun({ text: 'RUC / Cédula: ', bold: true, color: TEXT_MUTED, size: 16 }),
-                                new TextRun({ text: doc.cliente.ruc_nit, color: TEXT_DARK, size: 16 }),
+                                new TextRun({ text: 'Proyecto / Obra: ', bold: true, color: TEXT_MUTED, size: 17 }),
+                                new TextRun({ text: doc.proyecto_obra || clienteNombre, bold: true, color: TEXT_DARK, size: 18 }),
                               ],
                             }),
+                            ...(doc.solicitado_por || doc.responsable
+                              ? [
+                                  new Paragraph({
+                                    spacing: { before: 40 },
+                                    children: [
+                                      new TextRun({ text: 'Solicitado por: ', bold: true, color: TEXT_MUTED, size: 16 }),
+                                      new TextRun({ text: doc.solicitado_por || doc.responsable || '', color: TEXT_DARK, size: 16 }),
+                                    ],
+                                  }),
+                                ]
+                              : []),
+                            ...(doc.lugar_entrega || doc.cliente?.direccion
+                              ? [
+                                  new Paragraph({
+                                    spacing: { before: 40 },
+                                    children: [
+                                      new TextRun({ text: 'Lugar de Entrega: ', bold: true, color: TEXT_MUTED, size: 16 }),
+                                      new TextRun({ text: doc.lugar_entrega || doc.cliente?.direccion || 'En sitio', color: TEXT_DARK, size: 16 }),
+                                    ],
+                                  }),
+                                ]
+                              : []),
+                            ...(doc.cliente?.nombre && doc.cliente.nombre !== doc.proyecto_obra
+                              ? [
+                                  new Paragraph({
+                                    spacing: { before: 40 },
+                                    children: [
+                                      new TextRun({ text: 'Cliente Asociado: ', bold: true, color: TEXT_MUTED, size: 16 }),
+                                      new TextRun({ text: doc.cliente.nombre, color: TEXT_DARK, size: 16 }),
+                                    ],
+                                  }),
+                                ]
+                              : []),
                           ]
-                        : []),
-                      ...(doc.cliente?.telefono
-                        ? [
+                        : [
                             new Paragraph({
-                              spacing: { before: 40 },
+                              spacing: { before: 80 },
                               children: [
-                                new TextRun({ text: 'Teléfono: ', bold: true, color: TEXT_MUTED, size: 16 }),
-                                new TextRun({ text: doc.cliente.telefono, color: TEXT_DARK, size: 16 }),
+                                new TextRun({ text: 'Cliente: ', bold: true, color: TEXT_MUTED, size: 17 }),
+                                new TextRun({ text: clienteNombre, bold: true, color: TEXT_DARK, size: 18 }),
                               ],
                             }),
-                          ]
-                        : []),
-                      ...(doc.cliente?.direccion
-                        ? [
-                            new Paragraph({
-                              spacing: { before: 40 },
-                              children: [
-                                new TextRun({ text: 'Dirección: ', bold: true, color: TEXT_MUTED, size: 16 }),
-                                new TextRun({ text: doc.cliente.direccion, color: TEXT_DARK, size: 16 }),
-                              ],
-                            }),
-                          ]
-                        : []),
+                            ...(doc.cliente?.ruc_nit
+                              ? [
+                                  new Paragraph({
+                                    spacing: { before: 40 },
+                                    children: [
+                                      new TextRun({ text: 'RUC / Cédula: ', bold: true, color: TEXT_MUTED, size: 16 }),
+                                      new TextRun({ text: doc.cliente.ruc_nit, color: TEXT_DARK, size: 16 }),
+                                    ],
+                                  }),
+                                ]
+                              : []),
+                            ...(doc.cliente?.telefono
+                              ? [
+                                  new Paragraph({
+                                    spacing: { before: 40 },
+                                    children: [
+                                      new TextRun({ text: 'Teléfono: ', bold: true, color: TEXT_MUTED, size: 16 }),
+                                      new TextRun({ text: doc.cliente.telefono, color: TEXT_DARK, size: 16 }),
+                                    ],
+                                  }),
+                                ]
+                              : []),
+                            ...(doc.cliente?.direccion
+                              ? [
+                                  new Paragraph({
+                                    spacing: { before: 40 },
+                                    children: [
+                                      new TextRun({ text: 'Dirección: ', bold: true, color: TEXT_MUTED, size: 16 }),
+                                      new TextRun({ text: doc.cliente.direccion, color: TEXT_DARK, size: 16 }),
+                                    ],
+                                  }),
+                                ]
+                              : []),
+                          ]),
                     ],
                   }),
                   // Columna Derecha: Emisión
@@ -327,13 +372,33 @@ export async function generarDOCXDocumento(doc: Documento, empresa: EmpresaConfi
                             new Paragraph({
                               spacing: { before: 40 },
                               children: [
-                                new TextRun({ text: 'Válida hasta: ', bold: true, color: ACCENT_BLUE, size: 16 }),
+                                new TextRun({
+                                  text: doc.tipo === 'lista_materiales' ? 'Requerido para: ' : 'Válida hasta: ',
+                                  bold: true,
+                                  color: ACCENT_BLUE,
+                                  size: 16,
+                                }),
                                 new TextRun({ text: formatearFecha(doc.valida_hasta), bold: true, color: TEXT_DARK, size: 16 }),
                               ],
                             }),
                           ]
                         : []),
-                      ...(doc.responsable
+                      ...(doc.emisor
+                        ? [
+                            new Paragraph({
+                              spacing: { before: 40 },
+                              children: [
+                                new TextRun({
+                                  text: doc.tipo === 'lista_materiales' ? 'Comprador: ' : 'Emisor: ',
+                                  bold: true,
+                                  color: TEXT_MUTED,
+                                  size: 16,
+                                }),
+                                new TextRun({ text: doc.emisor, color: TEXT_DARK, size: 16 }),
+                              ],
+                            }),
+                          ]
+                        : doc.responsable
                         ? [
                             new Paragraph({
                               spacing: { before: 40 },
@@ -373,7 +438,7 @@ export async function generarDOCXDocumento(doc: Documento, empresa: EmpresaConfi
           new Paragraph({
             children: [
               new TextRun({
-                text: (doc.seccion_titulo || 'DETALLE DE ÍTEMS Y SERVICIOS').toUpperCase(),
+                text: (doc.seccion_titulo || (doc.tipo === 'lista_materiales' ? 'LISTA DE MATERIALES E INSUMOS' : 'DETALLE DE ÍTEMS Y SERVICIOS')).toUpperCase(),
                 bold: true,
                 color: BRAND_BLUE,
                 size: 18,
@@ -398,69 +463,130 @@ export async function generarDOCXDocumento(doc: Documento, empresa: EmpresaConfi
               // Encabezado
               new TableRow({
                 tableHeader: true,
-                children: [
-                  new TableCell({
-                    shading: { fill: BRAND_BLUE },
-                    width: { size: 10, type: WidthType.PERCENTAGE },
-                    margins: { top: 120, bottom: 120, left: 100, right: 100 },
-                    children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'Cant.', bold: true, color: 'FFFFFF', size: 16 })] })],
-                  }),
-                  new TableCell({
-                    shading: { fill: BRAND_BLUE },
-                    width: { size: 20, type: WidthType.PERCENTAGE },
-                    margins: { top: 120, bottom: 120, left: 100, right: 100 },
-                    children: [new Paragraph({ children: [new TextRun({ text: 'Categoría', bold: true, color: 'FFFFFF', size: 16 })] })],
-                  }),
-                  new TableCell({
-                    shading: { fill: BRAND_BLUE },
-                    width: { size: 44, type: WidthType.PERCENTAGE },
-                    margins: { top: 120, bottom: 120, left: 100, right: 100 },
-                    children: [new Paragraph({ children: [new TextRun({ text: 'Descripción del Ítem / Servicio', bold: true, color: 'FFFFFF', size: 16 })] })],
-                  }),
-                  new TableCell({
-                    shading: { fill: BRAND_BLUE },
-                    width: { size: 13, type: WidthType.PERCENTAGE },
-                    margins: { top: 120, bottom: 120, left: 100, right: 100 },
-                    children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: 'P. Unit', bold: true, color: 'FFFFFF', size: 16 })] })],
-                  }),
-                  new TableCell({
-                    shading: { fill: BRAND_BLUE },
-                    width: { size: 13, type: WidthType.PERCENTAGE },
-                    margins: { top: 120, bottom: 120, left: 100, right: 100 },
-                    children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: 'Total', bold: true, color: 'FFFFFF', size: 16 })] })],
-                  }),
-                ],
+                children: doc.tipo === 'lista_materiales'
+                  ? [
+                      new TableCell({
+                        shading: { fill: BRAND_BLUE },
+                        width: { size: 10, type: WidthType.PERCENTAGE },
+                        margins: { top: 120, bottom: 120, left: 100, right: 100 },
+                        children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'Cant.', bold: true, color: 'FFFFFF', size: 16 })] })],
+                      }),
+                      new TableCell({
+                        shading: { fill: BRAND_BLUE },
+                        width: { size: 12, type: WidthType.PERCENTAGE },
+                        margins: { top: 120, bottom: 120, left: 100, right: 100 },
+                        children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'Udm', bold: true, color: 'FFFFFF', size: 16 })] })],
+                      }),
+                      new TableCell({
+                        shading: { fill: BRAND_BLUE },
+                        width: { size: 52, type: WidthType.PERCENTAGE },
+                        margins: { top: 120, bottom: 120, left: 100, right: 100 },
+                        children: [new Paragraph({ children: [new TextRun({ text: 'Descripción del Material / Insumo', bold: true, color: 'FFFFFF', size: 16 })] })],
+                      }),
+                      new TableCell({
+                        shading: { fill: BRAND_BLUE },
+                        width: { size: 13, type: WidthType.PERCENTAGE },
+                        margins: { top: 120, bottom: 120, left: 100, right: 100 },
+                        children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: 'P. Unit', bold: true, color: 'FFFFFF', size: 16 })] })],
+                      }),
+                      new TableCell({
+                        shading: { fill: BRAND_BLUE },
+                        width: { size: 13, type: WidthType.PERCENTAGE },
+                        margins: { top: 120, bottom: 120, left: 100, right: 100 },
+                        children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: 'Total', bold: true, color: 'FFFFFF', size: 16 })] })],
+                      }),
+                    ]
+                  : [
+                      new TableCell({
+                        shading: { fill: BRAND_BLUE },
+                        width: { size: 10, type: WidthType.PERCENTAGE },
+                        margins: { top: 120, bottom: 120, left: 100, right: 100 },
+                        children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'Cant.', bold: true, color: 'FFFFFF', size: 16 })] })],
+                      }),
+                      new TableCell({
+                        shading: { fill: BRAND_BLUE },
+                        width: { size: 20, type: WidthType.PERCENTAGE },
+                        margins: { top: 120, bottom: 120, left: 100, right: 100 },
+                        children: [new Paragraph({ children: [new TextRun({ text: 'Categoría', bold: true, color: 'FFFFFF', size: 16 })] })],
+                      }),
+                      new TableCell({
+                        shading: { fill: BRAND_BLUE },
+                        width: { size: 44, type: WidthType.PERCENTAGE },
+                        margins: { top: 120, bottom: 120, left: 100, right: 100 },
+                        children: [new Paragraph({ children: [new TextRun({ text: 'Descripción del Ítem / Servicio', bold: true, color: 'FFFFFF', size: 16 })] })],
+                      }),
+                      new TableCell({
+                        shading: { fill: BRAND_BLUE },
+                        width: { size: 13, type: WidthType.PERCENTAGE },
+                        margins: { top: 120, bottom: 120, left: 100, right: 100 },
+                        children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: 'P. Unit', bold: true, color: 'FFFFFF', size: 16 })] })],
+                      }),
+                      new TableCell({
+                        shading: { fill: BRAND_BLUE },
+                        width: { size: 13, type: WidthType.PERCENTAGE },
+                        margins: { top: 120, bottom: 120, left: 100, right: 100 },
+                        children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: 'Total', bold: true, color: 'FFFFFF', size: 16 })] })],
+                      }),
+                    ],
               }),
               // Filas de Items
               ...(doc.items || []).map((it, idx) =>
                 new TableRow({
-                  children: [
-                    new TableCell({
-                      shading: { fill: idx % 2 === 0 ? 'FFFFFF' : LIGHT_BG },
-                      margins: { top: 100, bottom: 100, left: 100, right: 100 },
-                      children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: String(it.cantidad), size: 16 })] })],
-                    }),
-                    new TableCell({
-                      shading: { fill: idx % 2 === 0 ? 'FFFFFF' : LIGHT_BG },
-                      margins: { top: 100, bottom: 100, left: 100, right: 100 },
-                      children: [new Paragraph({ children: [new TextRun({ text: CATEGORY_NAMES[it.categoria] || it.categoria, size: 16, color: TEXT_MUTED })] })],
-                    }),
-                    new TableCell({
-                      shading: { fill: idx % 2 === 0 ? 'FFFFFF' : LIGHT_BG },
-                      margins: { top: 100, bottom: 100, left: 100, right: 100 },
-                      children: [new Paragraph({ children: [new TextRun({ text: it.descripcion, size: 16, color: TEXT_DARK })] })],
-                    }),
-                    new TableCell({
-                      shading: { fill: idx % 2 === 0 ? 'FFFFFF' : LIGHT_BG },
-                      margins: { top: 100, bottom: 100, left: 100, right: 100 },
-                      children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `$${formatoMoneda(it.precio_unitario)}`, size: 16 })] })],
-                    }),
-                    new TableCell({
-                      shading: { fill: idx % 2 === 0 ? 'FFFFFF' : LIGHT_BG },
-                      margins: { top: 100, bottom: 100, left: 100, right: 100 },
-                      children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `$${formatoMoneda(it.total)}`, bold: true, size: 16, color: TEXT_DARK })] })],
-                    }),
-                  ],
+                  children: doc.tipo === 'lista_materiales'
+                    ? [
+                        new TableCell({
+                          shading: { fill: idx % 2 === 0 ? 'FFFFFF' : LIGHT_BG },
+                          margins: { top: 100, bottom: 100, left: 100, right: 100 },
+                          children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: String(it.cantidad), size: 16 })] })],
+                        }),
+                        new TableCell({
+                          shading: { fill: idx % 2 === 0 ? 'FFFFFF' : LIGHT_BG },
+                          margins: { top: 100, bottom: 100, left: 100, right: 100 },
+                          children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: it.unidad_medida || 'und', size: 16, color: TEXT_MUTED })] })],
+                        }),
+                        new TableCell({
+                          shading: { fill: idx % 2 === 0 ? 'FFFFFF' : LIGHT_BG },
+                          margins: { top: 100, bottom: 100, left: 100, right: 100 },
+                          children: [new Paragraph({ children: [new TextRun({ text: it.descripcion, size: 16, color: TEXT_DARK })] })],
+                        }),
+                        new TableCell({
+                          shading: { fill: idx % 2 === 0 ? 'FFFFFF' : LIGHT_BG },
+                          margins: { top: 100, bottom: 100, left: 100, right: 100 },
+                          children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `$${formatoMoneda(it.precio_unitario)}`, size: 16 })] })],
+                        }),
+                        new TableCell({
+                          shading: { fill: idx % 2 === 0 ? 'FFFFFF' : LIGHT_BG },
+                          margins: { top: 100, bottom: 100, left: 100, right: 100 },
+                          children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `$${formatoMoneda(it.total)}`, bold: true, size: 16, color: TEXT_DARK })] })],
+                        }),
+                      ]
+                    : [
+                        new TableCell({
+                          shading: { fill: idx % 2 === 0 ? 'FFFFFF' : LIGHT_BG },
+                          margins: { top: 100, bottom: 100, left: 100, right: 100 },
+                          children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: String(it.cantidad), size: 16 })] })],
+                        }),
+                        new TableCell({
+                          shading: { fill: idx % 2 === 0 ? 'FFFFFF' : LIGHT_BG },
+                          margins: { top: 100, bottom: 100, left: 100, right: 100 },
+                          children: [new Paragraph({ children: [new TextRun({ text: CATEGORY_NAMES[it.categoria] || it.categoria, size: 16, color: TEXT_MUTED })] })],
+                        }),
+                        new TableCell({
+                          shading: { fill: idx % 2 === 0 ? 'FFFFFF' : LIGHT_BG },
+                          margins: { top: 100, bottom: 100, left: 100, right: 100 },
+                          children: [new Paragraph({ children: [new TextRun({ text: it.descripcion, size: 16, color: TEXT_DARK })] })],
+                        }),
+                        new TableCell({
+                          shading: { fill: idx % 2 === 0 ? 'FFFFFF' : LIGHT_BG },
+                          margins: { top: 100, bottom: 100, left: 100, right: 100 },
+                          children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `$${formatoMoneda(it.precio_unitario)}`, size: 16 })] })],
+                        }),
+                        new TableCell({
+                          shading: { fill: idx % 2 === 0 ? 'FFFFFF' : LIGHT_BG },
+                          margins: { top: 100, bottom: 100, left: 100, right: 100 },
+                          children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `$${formatoMoneda(it.total)}`, bold: true, size: 16, color: TEXT_DARK })] })],
+                        }),
+                      ],
                 })
               ),
             ],
@@ -476,7 +602,7 @@ export async function generarDOCXDocumento(doc: Documento, empresa: EmpresaConfi
             rows: [
               new TableRow({
                 children: [
-                  // Columna Izquierda: Condiciones y Términos
+                  // Columna Izquierda: Condiciones y Términos / Notas
                   new TableCell({
                     width: { size: 52, type: WidthType.PERCENTAGE },
                     borders: TABLE_NO_BORDERS,
@@ -487,7 +613,7 @@ export async function generarDOCXDocumento(doc: Documento, empresa: EmpresaConfi
                             new Paragraph({
                               children: [
                                 new TextRun({
-                                  text: 'CONDICIONES Y TÉRMINOS:',
+                                  text: doc.tipo === 'lista_materiales' ? 'OBSERVACIONES Y NOTAS DE COMPRA:' : 'CONDICIONES Y TÉRMINOS:',
                                   bold: true,
                                   color: BRAND_BLUE,
                                   size: 17,
@@ -547,7 +673,7 @@ export async function generarDOCXDocumento(doc: Documento, empresa: EmpresaConfi
                               new TableCell({
                                 shading: { fill: LIGHT_BG },
                                 margins: { top: 80, bottom: 80, left: 100, right: 100 },
-                                children: [new Paragraph({ children: [new TextRun({ text: 'Subtotal Neto:', size: 16, color: TEXT_DARK })] })],
+                                children: [new Paragraph({ children: [new TextRun({ text: doc.tipo === 'lista_materiales' ? 'Subtotal Materiales:' : 'Subtotal Neto:', size: 16, color: TEXT_DARK })] })],
                               }),
                               new TableCell({
                                 shading: { fill: LIGHT_BG },
@@ -556,8 +682,8 @@ export async function generarDOCXDocumento(doc: Documento, empresa: EmpresaConfi
                               }),
                             ],
                           }),
-                          // Mano de Obra (si aplica)
-                          ...(doc.incluir_mano_obra && doc.mano_obra_monto > 0
+                          // Mano de Obra (si aplica y no es lista de materiales)
+                          ...(doc.tipo !== 'lista_materiales' && doc.incluir_mano_obra && doc.mano_obra_monto > 0
                             ? [
                                 new TableRow({
                                   children: [
@@ -594,13 +720,13 @@ export async function generarDOCXDocumento(doc: Documento, empresa: EmpresaConfi
                                 }),
                               ]
                             : []),
-                          // TOTAL GENERAL (Barra Azul Destacada)
+                          // TOTAL GENERAL / MATERIALES (Barra Azul Destacada)
                           new TableRow({
                             children: [
                               new TableCell({
                                 shading: { fill: BRAND_BLUE },
                                 margins: { top: 120, bottom: 120, left: 100, right: 100 },
-                                children: [new Paragraph({ children: [new TextRun({ text: 'TOTAL GENERAL:', bold: true, color: 'FFFFFF', size: 18 })] })],
+                                children: [new Paragraph({ children: [new TextRun({ text: doc.tipo === 'lista_materiales' ? 'TOTAL MATERIALES:' : 'TOTAL GENERAL:', bold: true, color: 'FFFFFF', size: 18 })] })],
                               }),
                               new TableCell({
                                 shading: { fill: BRAND_BLUE },
@@ -609,8 +735,8 @@ export async function generarDOCXDocumento(doc: Documento, empresa: EmpresaConfi
                               }),
                             ],
                           }),
-                          // Abono Inicial (si aplica)
-                          ...(doc.abono_porcentaje > 0 && doc.abono_monto
+                          // Abono Inicial (solo si aplica y no es lista de materiales)
+                          ...(doc.tipo !== 'lista_materiales' && doc.abono_porcentaje > 0 && doc.abono_monto
                             ? [
                                 new TableRow({
                                   children: [

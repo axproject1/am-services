@@ -239,32 +239,53 @@ export const DataService = {
 
       if (idExistente) {
         // Actualizar existente
-        const { data, error } = await supabase
+        let res = await supabase
           .from('documentos')
           .update(docPayload)
           .eq('id', idExistente)
           .select()
           .single();
 
-        if (error) {
-          console.error('Error al actualizar documento en Supabase:', error);
-          dbError = error;
-        } else if (data) {
-          savedId = data.id;
+        // Fallback si alguna columna opcional aún no existe en Supabase
+        if (res.error && (res.error.message?.includes('column') || res.error.message?.includes('does not exist'))) {
+          const { proyecto_obra, lugar_entrega, solicitado_por, ...fallbackPayload } = docPayload as any;
+          res = await supabase
+            .from('documentos')
+            .update(fallbackPayload)
+            .eq('id', idExistente)
+            .select()
+            .single();
+        }
+
+        if (res.error) {
+          console.error('Error al actualizar documento en Supabase:', res.error);
+          dbError = res.error;
+        } else if (res.data) {
+          savedId = res.data.id;
         }
       } else {
         // Insertar nuevo documento
-        const { data, error } = await supabase
+        let res = await supabase
           .from('documentos')
           .insert(docPayload)
           .select()
           .single();
 
-        if (error) {
-          console.error('Error al insertar documento en Supabase:', error);
-          dbError = error;
-        } else if (data) {
-          savedId = data.id;
+        // Fallback si alguna columna opcional aún no existe en Supabase
+        if (res.error && (res.error.message?.includes('column') || res.error.message?.includes('does not exist'))) {
+          const { proyecto_obra, lugar_entrega, solicitado_por, ...fallbackPayload } = docPayload as any;
+          res = await supabase
+            .from('documentos')
+            .insert(fallbackPayload)
+            .select()
+            .single();
+        }
+
+        if (res.error) {
+          console.error('Error al insertar documento en Supabase:', res.error);
+          dbError = res.error;
+        } else if (res.data) {
+          savedId = res.data.id;
         }
       }
 
@@ -272,16 +293,32 @@ export const DataService = {
         // Eliminar y reinsertar items
         await supabase.from('documento_items').delete().eq('documento_id', savedId);
         if (items && items.length > 0) {
-          const itemsPayload = items.map((it, idx) => ({
+          const itemsPayloadWithUdm = items.map((it, idx) => ({
             documento_id: savedId,
             categoria: it.categoria || 'material',
+            unidad_medida: it.unidad_medida || 'und',
             cantidad: Number(it.cantidad) || 1,
             descripcion: it.descripcion,
             precio_unitario: Number(it.precio_unitario) || 0,
             total: (Number(it.cantidad) || 0) * (Number(it.precio_unitario) || 0),
             orden: idx,
           }));
-          const { error: itemsError } = await supabase.from('documento_items').insert(itemsPayload);
+
+          let { error: itemsError } = await supabase.from('documento_items').insert(itemsPayloadWithUdm);
+          if (itemsError && (itemsError.message?.includes('column') || itemsError.message?.includes('does not exist'))) {
+            // Fallback sin unidad_medida si la columna aún no está creada
+            const itemsPayloadPlain = items.map((it, idx) => ({
+              documento_id: savedId,
+              categoria: it.categoria || 'material',
+              cantidad: Number(it.cantidad) || 1,
+              descripcion: it.descripcion,
+              precio_unitario: Number(it.precio_unitario) || 0,
+              total: (Number(it.cantidad) || 0) * (Number(it.precio_unitario) || 0),
+              orden: idx,
+            }));
+            const fallbackResult = await supabase.from('documento_items').insert(itemsPayloadPlain);
+            itemsError = fallbackResult.error;
+          }
           if (itemsError) console.error('Error al insertar items en Supabase:', itemsError);
         }
         const docActualizado = await this.getDocumentoById(savedId);

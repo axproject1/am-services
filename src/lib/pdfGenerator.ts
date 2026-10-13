@@ -158,31 +158,59 @@ export async function generarPDFDocumento(
   y += 5.5;
 
   // ── 3. METADATOS: TARJETAS DINÁMICAS (CLIENTE & EMISIÓN) ──
-  // Preparamos los datos de cada tarjeta
+  // Preparamos los datos de cada tarjeta según el tipo de documento
+  const esMateriales = doc.tipo === 'lista_materiales';
   const clienteNombre = doc.cliente?.nombre || doc.cliente_nombre_manual || 'Cliente Particular';
-  const clienteLines: Array<{ label: string; value: string }> = [
-    { label: 'Cliente:', value: clienteNombre },
-  ];
-  if (doc.cliente?.ruc_nit) {
-    clienteLines.push({ label: 'RUC / Cédula:', value: doc.cliente.ruc_nit });
-  }
-  if (doc.cliente?.telefono) {
-    clienteLines.push({ label: 'Teléfono:', value: doc.cliente.telefono });
-  }
-  if (doc.cliente?.direccion) {
-    clienteLines.push({ label: 'Dirección:', value: doc.cliente.direccion });
-  }
-  if (doc.cliente?.email) {
-    clienteLines.push({ label: 'Email:', value: doc.cliente.email });
+  
+  const clienteLines: Array<{ label: string; value: string }> = [];
+  if (esMateriales) {
+    clienteLines.push({
+      label: 'Proyecto / Obra:',
+      value: doc.proyecto_obra || clienteNombre || 'General',
+    });
+    if (doc.solicitado_por || doc.responsable) {
+      clienteLines.push({
+        label: 'Solicitado por:',
+        value: doc.solicitado_por || doc.responsable || '',
+      });
+    }
+    if (doc.lugar_entrega || doc.cliente?.direccion) {
+      clienteLines.push({
+        label: 'Lugar de Entrega:',
+        value: doc.lugar_entrega || doc.cliente?.direccion || 'En sitio',
+      });
+    }
+    if (doc.cliente?.nombre && doc.cliente.nombre !== doc.proyecto_obra) {
+      clienteLines.push({ label: 'Cliente Asociado:', value: doc.cliente.nombre });
+    }
+  } else {
+    clienteLines.push({ label: 'Cliente:', value: clienteNombre });
+    if (doc.cliente?.ruc_nit) {
+      clienteLines.push({ label: 'RUC / Cédula:', value: doc.cliente.ruc_nit });
+    }
+    if (doc.cliente?.telefono) {
+      clienteLines.push({ label: 'Teléfono:', value: doc.cliente.telefono });
+    }
+    if (doc.cliente?.direccion) {
+      clienteLines.push({ label: 'Dirección:', value: doc.cliente.direccion });
+    }
+    if (doc.cliente?.email) {
+      clienteLines.push({ label: 'Email:', value: doc.cliente.email });
+    }
   }
 
   const emisionLines: Array<{ label: string; value: string }> = [
     { label: 'Fecha Emisión:', value: formatearFechaEspanol(doc.fecha) },
   ];
   if (doc.valida_hasta) {
-    emisionLines.push({ label: 'Válida hasta:', value: formatearFechaEspanol(doc.valida_hasta) });
+    emisionLines.push({
+      label: esMateriales ? 'Requerido para:' : 'Válida hasta:',
+      value: formatearFechaEspanol(doc.valida_hasta),
+    });
   }
-  if (doc.responsable) {
+  if (doc.emisor) {
+    emisionLines.push({ label: esMateriales ? 'Comprador:' : 'Emisor:', value: doc.emisor });
+  } else if (doc.responsable) {
     const cargo = doc.responsable_cargo ? ` (${doc.responsable_cargo})` : '';
     emisionLines.push({ label: 'Responsable:', value: `${doc.responsable}${cargo}` });
   }
@@ -206,7 +234,7 @@ export async function generarPDFDocumento(
   const cardGap = 4;
   const cardWidth = (pageWidth - margin * 2 - cardGap) / 2;
 
-  // Tarjeta Izquierda: Cliente
+  // Tarjeta Izquierda: Cliente u Obra
   pdf.setFillColor(COLOR_LIGHT_BG[0], COLOR_LIGHT_BG[1], COLOR_LIGHT_BG[2]);
   pdf.setDrawColor(COLOR_BORDER[0], COLOR_BORDER[1], COLOR_BORDER[2]);
   pdf.setLineWidth(0.3);
@@ -216,11 +244,11 @@ export async function generarPDFDocumento(
   const rightCardX = margin + cardWidth + cardGap;
   pdf.roundedRect(rightCardX, y, cardWidth, cardHeight, 2, 2, 'FD');
 
-  // Encabezado Tarjeta Cliente
+  // Encabezado Tarjeta Cliente u Obra
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(8.5);
   pdf.setTextColor(COLOR_BLUE_ACCENT[0], COLOR_BLUE_ACCENT[1], COLOR_BLUE_ACCENT[2]);
-  pdf.text('DATOS DEL CLIENTE', margin + 4.5, y + 5);
+  pdf.text(esMateriales ? 'DATOS DE LA OBRA / PROYECTO' : 'DATOS DEL CLIENTE', margin + 4.5, y + 5);
 
   // Encabezado Tarjeta Emisión
   pdf.text('DETALLES DE EMISIÓN', rightCardX + 4.5, y + 5);
@@ -262,7 +290,7 @@ export async function generarPDFDocumento(
   y += cardHeight + 6;
 
   // ── 4. TÍTULO DE SECCIÓN TABLA ──
-  const seccionTitulo = (doc.seccion_titulo || 'DETALLE DE ÍTEMS Y SERVICIOS').toUpperCase();
+  const seccionTitulo = (doc.seccion_titulo || (esMateriales ? 'LISTA DE MATERIALES E INSUMOS' : 'DETALLE DE ÍTEMS Y SERVICIOS')).toUpperCase();
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(9);
   pdf.setTextColor(COLOR_NAVY[0], COLOR_NAVY[1], COLOR_NAVY[2]);
@@ -277,11 +305,16 @@ export async function generarPDFDocumento(
   y += 4;
 
   // ── 5. TABLA DE ÍTEMS (AUTOTABLE) ──
-  const tableHead = [['Cant.', 'Categoría', 'Descripción del Ítem / Servicio', 'P. Unitario', 'Total']];
+  const tableHead = esMateriales
+    ? [['Cant.', 'Udm', 'Descripción del Material / Insumo', 'P. Unitario', 'Total']]
+    : [['Cant.', 'Categoría', 'Descripción del Ítem / Servicio', 'P. Unitario', 'Total']];
+
   const items = doc.items || [];
   const tableBody = items.map(item => [
     item.cantidad.toString(),
-    CATEGORY_NAMES[item.categoria] || item.categoria || 'Servicio',
+    esMateriales
+      ? (item.unidad_medida || 'und')
+      : (CATEGORY_NAMES[item.categoria] || item.categoria || 'Servicio'),
     item.descripcion,
     `$${formatoMoneda(item.precio_unitario)}`,
     `$${formatoMoneda(item.total)}`,
@@ -308,13 +341,21 @@ export async function generarPDFDocumento(
     alternateRowStyles: {
       fillColor: [COLOR_LIGHT_BG[0], COLOR_LIGHT_BG[1], COLOR_LIGHT_BG[2]],
     },
-    columnStyles: {
-      0: { halign: 'center', cellWidth: 15 },
-      1: { halign: 'left', cellWidth: 26 },
-      2: { halign: 'left' },
-      3: { halign: 'right', cellWidth: 26 },
-      4: { halign: 'right', cellWidth: 28, fontStyle: 'bold' },
-    },
+    columnStyles: esMateriales
+      ? {
+          0: { halign: 'center', cellWidth: 15 },
+          1: { halign: 'center', cellWidth: 18 },
+          2: { halign: 'left' },
+          3: { halign: 'right', cellWidth: 26 },
+          4: { halign: 'right', cellWidth: 28, fontStyle: 'bold' },
+        }
+      : {
+          0: { halign: 'center', cellWidth: 15 },
+          1: { halign: 'left', cellWidth: 26 },
+          2: { halign: 'left' },
+          3: { halign: 'right', cellWidth: 26 },
+          4: { halign: 'right', cellWidth: 28, fontStyle: 'bold' },
+        },
     tableLineColor: [COLOR_BORDER[0], COLOR_BORDER[1], COLOR_BORDER[2]],
     tableLineWidth: 0.2,
     margin: { left: margin, right: margin },
@@ -336,10 +377,10 @@ export async function generarPDFDocumento(
   }
 
   const preTotalRows: TotalRow[] = [
-    { label: 'Subtotal Neto:', amount: doc.subtotal_neto },
+    { label: esMateriales ? 'Subtotal Materiales:' : 'Subtotal Neto:', amount: doc.subtotal_neto },
   ];
 
-  if (doc.incluir_mano_obra && doc.mano_obra_monto > 0) {
+  if (!esMateriales && doc.incluir_mano_obra && doc.mano_obra_monto > 0) {
     preTotalRows.push({ label: 'Mano de Obra:', amount: doc.mano_obra_monto });
   }
 
@@ -351,7 +392,7 @@ export async function generarPDFDocumento(
   }
 
   const postTotalRows: TotalRow[] = [];
-  if (doc.abono_porcentaje > 0 && doc.abono_monto) {
+  if (!esMateriales && doc.abono_porcentaje > 0 && doc.abono_monto) {
     const tag = doc.abono_base === 'mano_obra' ? 'M. Obra' : 'Inicial';
     postTotalRows.push({
       label: `Abono ${tag} (${doc.abono_porcentaje}%):`,
@@ -407,7 +448,7 @@ export async function generarPDFDocumento(
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(9.5);
   pdf.setTextColor(255, 255, 255);
-  pdf.text('TOTAL GENERAL:', totalsX + 4.5, curTotY + 4);
+  pdf.text(esMateriales ? 'TOTAL MATERIALES:' : 'TOTAL GENERAL:', totalsX + 4.5, curTotY + 4);
   pdf.text(`$${formatoMoneda(doc.total_general)}`, pageWidth - margin - 4.5, curTotY + 4, { align: 'right' });
 
   curTotY += barH + 2.5;
@@ -434,7 +475,7 @@ export async function generarPDFDocumento(
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(8.5);
     pdf.setTextColor(COLOR_NAVY[0], COLOR_NAVY[1], COLOR_NAVY[2]);
-    pdf.text('CONDICIONES Y TÉRMINOS:', margin, termY + 3);
+    pdf.text(esMateriales ? 'OBSERVACIONES Y NOTAS DE COMPRA:' : 'CONDICIONES Y TÉRMINOS:', margin, termY + 3);
 
     termY += 7.5;
 

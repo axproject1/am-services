@@ -8,6 +8,7 @@ export interface DocumentoItem {
   id?: number | string;
   documento_id?: number | string;
   categoria: CategoriaItem;
+  unidad_medida?: string;
   cantidad: number;
   descripcion: string;
   precio_unitario: number;
@@ -58,6 +59,9 @@ export interface Documento {
   emisor_cargo?: string;
   responsable?: string;
   responsable_cargo?: string;
+  proyecto_obra?: string;
+  lugar_entrega?: string;
+  solicitado_por?: string;
   usuario_id?: number | string;
   usar_empresa: boolean;
   incluir_logo?: boolean;
